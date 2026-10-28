@@ -1,0 +1,12 @@
+{
+  "alive": null,
+  "beat": 0,
+  "started": 0,
+  "uptime": 0,
+  "mem": 0,
+  "cpu": 0,
+  "disk": 0,
+  "version": "—",
+  "note": "等待首次心跳",
+  "history": []
+}
