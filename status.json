@@ -1,12 +1,1 @@
-{
-  "alive": null,
-  "beat": 0,
-  "started": 0,
-  "uptime": 0,
-  "mem": 0,
-  "cpu": 0,
-  "disk": 0,
-  "version": "—",
-  "note": "等待首次心跳",
-  "history": []
-}
+{"alive":true,"beat":1793208931,"started":1793204125,"uptime":4806,"mem":33,"version":"2026.10.29","goods":2,"note":"心跳正常","history":[1]}
