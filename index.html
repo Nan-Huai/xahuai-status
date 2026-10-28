@@ -222,16 +222,27 @@
     }).join('');
   }
 
-  function load(){
-    fetch('status.json?t=' + Date.now())
+  // 数据源：优先 raw（CORS 开放、跟着 commit 走），失败回落本地 status.json
+  var SOURCES = [
+    'https://raw.githubusercontent.com/Nan-Huai/xahuai-status/main/status.json',
+    'status.json'
+  ];
+
+  function loadFrom(i){
+    if (i >= SOURCES.length){
+      document.getElementById('app').className = 'wrap unk';
+      document.getElementById('label').textContent = '读取失败';
+      document.getElementById('desc').textContent = 'status.json 暂时拿不到';
+      return;
+    }
+    var url = SOURCES[i] + '?t=' + Date.now();
+    fetch(url, {cache: 'no-store'})
       .then(function(r){ if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(apply)
-      .catch(function(){
-        document.getElementById('app').className = 'wrap unk';
-        document.getElementById('label').textContent = '读取失败';
-        document.getElementById('desc').textContent = 'status.json 暂时拿不到';
-      });
+      .catch(function(){ loadFrom(i + 1); });
   }
+
+  function load(){ loadFrom(0); }
 
   // 每 30 秒刷新（页面开着的时候能看见变化）
   function tick(){
