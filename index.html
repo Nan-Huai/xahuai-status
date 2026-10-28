@@ -148,7 +148,7 @@
   </div>
 
   <div class="beats fade" style="animation-delay:.14s">
-    <div class="h"><span class="t">最近 48 次心跳</span><span class="s">每 5 分钟一次</span></div>
+    <div class="h"><span class="t">最近 48 次心跳</span><span class="s" id="srcTag">连接中</span></div>
     <div class="row" id="beats"></div>
   </div>
 
@@ -222,7 +222,10 @@
     }).join('');
   }
 
-  // 数据源：优先 raw（CORS 开放、跟着 commit 走），失败回落本地 status.json
+  // 数据源优先级（都不暴露服务器地址）：
+  // 1. raw.githubusercontent.com —— 跟着 commit 走，CORS 开放，CDN 缓存 ≤5 分钟
+  // 2. 仓库内 status.json —— Pages 自带，缓存更久
+  // 注：服务器每 5 分钟上报，故最坏延迟约 10 分钟。
   var SOURCES = [
     'https://raw.githubusercontent.com/Nan-Huai/xahuai-status/main/status.json',
     'status.json'
@@ -232,14 +235,19 @@
     if (i >= SOURCES.length){
       document.getElementById('app').className = 'wrap unk';
       document.getElementById('label').textContent = '读取失败';
-      document.getElementById('desc').textContent = 'status.json 暂时拿不到';
+      document.getElementById('desc').textContent = '拿不到心跳数据';
       return;
     }
-    var url = SOURCES[i] + '?t=' + Date.now();
-    fetch(url, {cache: 'no-store'})
-      .then(function(r){ if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(apply)
-      .catch(function(){ loadFrom(i + 1); });
+    var url = SOURCES[i] + (SOURCES[i].indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now();
+    var ctl = new AbortController();
+    var timer = setTimeout(function(){ ctl.abort(); }, 8000);
+    fetch(url, {cache: 'no-store', mode: 'cors', signal: ctl.signal})
+      .then(function(r){ clearTimeout(timer); if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function(d){
+        apply(d);
+        document.getElementById('srcTag').textContent = (i === 0 ? '≈5 分钟延迟' : '快照');
+      })
+      .catch(function(){ clearTimeout(timer); loadFrom(i + 1); });
   }
 
   function load(){ loadFrom(0); }
@@ -256,8 +264,8 @@
   }
 
   load();
-  setInterval(load, 60000);
-  setInterval(tick, 10000);
+  setInterval(load, 30000);
+  setInterval(tick, 5000);
 })();
 </script>
 </body>
